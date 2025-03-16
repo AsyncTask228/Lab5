@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Добро пожаловать на наш сайт</title>
+    <style>
+        /* Общий стиль страницы */
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f7f8f9;
+            color: #333;
+        }
+
+        /* Заголовок */
+        h1 {
+            text-align: center;
+            font-size: 3rem;
+            margin-top: 50px;
+            color: #333;
+        }
+
+        /* Секция о сайте */
+        .about-section {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            padding: 50px 10%;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            margin: 20px 10%;
+        }
+
+        .about-section h2 {
+            font-size: 2rem;
+            color: #007bff;
+            margin-bottom: 20px;
+        }
+
+        .about-section p {
+            font-size: 1.2rem;
+            line-height: 1.6;
+            color: #555;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        /* Картинка в секции */
+        .about-section img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+        }
+
+        /* Кнопки входа и регистрации */
+        .auth-buttons {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+
+        .auth-buttons a {
+            display: inline-block;
+            background-color: #007bff;
+            color: #fff;
+            text-decoration: none;
+            padding: 12px 25px;
+            margin-left: 10px;
+            border-radius: 5px;
+            font-size: 1rem;
+            transition: background-color 0.3s ease;
+        }
+
+        .auth-buttons a:hover {
+            background-color: #0056b3;
+        }
+
+        /* Стиль футера */
+        footer {
+            background-color: #007bff;
+            color: white;
+            text-align: center;
+            padding: 10px 0;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+        }
+
+        footer a {
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Кнопки для входа и регистрации -->
+    <div class="auth-buttons">
+        <a href="/sign_in">Войти</a>
+        <a href="/sign_up">Зарегистрироваться</a>
+    </div>
+
+    <!-- Секция "О сайте" -->
+    <div class="about-section">
+        <h2>Добро пожаловать на наш сайт!</h2>
+        <p>Здесь вы можете публиковать свои посты, делиться множеством идей и находить единомышленников. Мы создали это пространство, чтобы каждый мог выразить себя и быть услышанным.</p>
+        <img src="https://sun9-75.userapi.com/impg/xt-wkJM5Ek1VPua_DYmJ1vSXpbXXpYbg2oc9TA/pJZyvUXcWLc.jpg?size=604x385&quality=95&sign=a0d064bc8a07b2d0654320a71103b35e&type=album" alt="Сайт для публикации постов">
+    </div>
+
+    <!-- Футер -->
+    <footer>
+        <p>© 2025 Сайт для публикации постов | <a href="/terms">Условия использования</a></p>
+    </footer>
+
+</body>
+</html>

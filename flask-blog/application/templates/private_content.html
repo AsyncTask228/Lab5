@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Личный кабинет</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f7f8f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            padding: 20px;
+        }
+
+        .container {
+            width: 50%;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            text-align: center;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+        .post {
+            border-bottom: 1px solid #ddd;
+            padding: 15px 0;
+        }
+
+        .comment {
+            padding-left: 20px;
+            font-size: 14px;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>Добро пожаловать, {{ current_user.username }}!</h2>
+
+        <!-- Форма для создания поста -->
+        <form method="POST">
+            {{ form.hidden_tag() }}
+            <input type="text" name="title" placeholder="Заголовок поста" required>
+            <textarea name="content" placeholder="Текст поста" rows="4" required></textarea>
+            <button type="submit">Опубликовать</button>
+        </form>
+
+        <hr>
+
+        <!-- Отображение постов -->
+        {% for post in posts %}
+            <div class="post">
+                <h3>{{ post.title }}</h3>
+                <p>{{ post.content }}</p>
+                <small>Автор: {{ post.user.username }} | {{ post.timestamp.strftime('%Y-%m-%d %H:%M') }}</small>
+
+                <!-- Форма для комментариев -->
+                <form method="POST" action="{{ url_for('comment', post_id=post.id) }}">
+                    {{ form.hidden_tag() }}
+                    <textarea name="content" placeholder="Оставьте комментарий" rows="2" required></textarea>
+                    <button type="submit">Комментировать</button>
+                </form>
+
+                <!-- Отображение комментариев -->
+                {% for comment in post.comments %}
+                    <div class="comment">
+                        <strong>{{ comment.user.username }}</strong>: {{ comment.content }}
+                        <small>{{ comment.timestamp.strftime('%Y-%m-%d %H:%M') }}</small>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endfor %}
+    </div>
+
+</body>
+</html>
