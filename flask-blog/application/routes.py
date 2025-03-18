@@ -2,7 +2,7 @@ import os
 from application import app, db
 from flask import render_template, flash, redirect, url_for, request
 from application.forms import LoginForm, RegisterForm, PostForm, CommentForm
-from application.models import User, Post, Comment
+from application.models import User, Post, Comment, Report
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import login_user, current_user, logout_user, login_required
 from werkzeug.utils import secure_filename
@@ -58,7 +58,6 @@ def private_content():
                           comment_form=comment_form, 
                           posts=posts)
 
-
 @app.route("/sign_up", methods=['GET', 'POST'])
 def sign_up():
     form = RegisterForm()
@@ -87,7 +86,14 @@ def sign_up():
 
         # Логика сохранения данных пользователя в базе данных
         hashed_password = generate_password_hash(form.password.data, method='pbkdf2:sha256')
-        user = User(username=form.username.data, email=form.email.data, password_hash=hashed_password)
+        # Проверяем, первый ли это пользователь
+        is_admin = User.query.count() == 0  # True, если пользователей ещё нет
+        user = User(
+            username=form.username.data,
+            email=form.email.data,
+            password_hash=hashed_password,
+            is_admin=is_admin  # Первый пользователь становится админом
+        )
         db.session.add(user)
         db.session.commit()
 
@@ -98,7 +104,6 @@ def sign_up():
         return redirect(url_for('private_content'))
 
     return render_template("sign_up.html", title="Регистрация", form=form)
-
 
 @app.route("/sign_in", methods=['GET', 'POST'])
 def sign_in():
@@ -113,12 +118,64 @@ def sign_in():
             flash('Login failed. Check your email and/or password.', 'danger')
     return render_template('sign_in.html', form=form)
 
-
 @app.route("/") # avaliable_contant
 def main_page():
     return render_template("main_page.html")
 
+def admin_required(f):
+    @login_required
+    def wrapper(*args, **kwargs):
+        if not current_user.is_admin:
+            flash('Доступ только для администраторов!', 'danger')
+            return redirect(url_for('private_content'))
+        return f(*args, **kwargs)
+    wrapper.__name__ = f.__name__  # Сохраняем имя функции для Flask
+    return wrapper
 
 @app.route("/admin")
+@admin_required
 def admin():
-    return "<p>admin_panel</p>"
+    posts = Post.query.order_by(Post.timestamp.desc()).all()
+    reports = Report.query.order_by(Report.timestamp.desc()).all()
+    return render_template('admin.html', posts=posts, reports=reports)
+
+@app.route("/delete_post/<int:post_id>", methods=['POST'])
+@admin_required
+def delete_post(post_id):
+    post = Post.query.get_or_404(post_id)
+    # Удаляем связанные комментарии и жалобы
+    Comment.query.filter_by(post_id=post_id).delete()
+    Report.query.filter_by(post_id=post_id).delete()
+    db.session.delete(post)
+    db.session.commit()
+    flash('Пост удалён!', 'success')
+    return redirect(url_for('admin'))
+
+@app.route("/logout")
+@login_required
+def logout():
+    logout_user()
+    flash('Вы вышли из аккаунта!', 'success')
+    return redirect(url_for('sign_in'))
+
+@app.route("/report", methods=['POST'])
+@login_required
+def report():
+    post_id = request.form.get('post_id')
+    comment_id = request.form.get('comment_id')
+    reason = request.form.get('reason', 'Нарушение правил')
+
+    if not post_id and not comment_id:
+        flash('Не указан объект жалобы!', 'danger')
+        return redirect(url_for('private_content'))
+
+    report = Report(
+        user_id=current_user.id,
+        post_id=post_id if post_id else None,
+        comment_id=comment_id if comment_id else None,
+        reason=reason
+    )
+    db.session.add(report)
+    db.session.commit()
+    flash('Жалоба отправлена!', 'success')
+    return redirect(url_for('private_content'))

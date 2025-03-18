@@ -111,7 +111,9 @@
 <body>
     <div class="container">
         <h1>Личная страница</h1>
-        <p class="welcome">Добро пожаловать, {{ current_user.username }}!</p>
+        <p class="welcome">Добро пожаловать, {{ current_user.username }}! 
+            <a href="{{ url_for('logout') }}" class="create-post-btn" style="float: right;">Выйти</a>
+        </p>
 
         <!-- Кнопка для показа формы создания поста -->
         <button class="create-post-btn" onclick="togglePostForm()">Создать публикацию</button>
@@ -164,6 +166,10 @@
                         {% endif %}
                     {% endif %}
                     <p class="post-meta">Автор: {{ post.user.username }} | Опубликовано: {{ post.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+                    <form method="POST" action="{{ url_for('report') }}" style="display: inline;">
+                        <input type="hidden" name="post_id" value="{{ post.id }}">
+                        <button type="submit" class="comment-btn">Пожаловаться</button>
+                    </form>
 
                     <!-- Комментарии -->
                     <h4>Комментарии:</h4>
@@ -173,6 +179,10 @@
                                 <p>{{ comment.content }} <br>
                                    <small>Автор: {{ comment.user.username }} | {{ comment.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</small>
                                 </p>
+                                <form method="POST" action="{{ url_for('report') }}" style="display: inline;">
+                                    <input type="hidden" name="comment_id" value="{{ comment.id }}">
+                                    <button type="submit" class="comment-btn">Пожаловаться</button>
+                                </form>
                             </div>
                         {% endfor %}
                     {% else %}

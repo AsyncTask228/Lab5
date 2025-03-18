@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Панель администратора</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        h1, h2 {
+            color: #1a73e8;
+        }
+        .post, .report {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            background: #fafafa;
+        }
+        .post img, .post video {
+            max-width: 100%;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+        .post-meta {
+            font-size: 0.9em;
+            color: #666;
+        }
+        .delete-btn {
+            background-color: #dc3545;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .delete-btn:hover {
+            background-color: #c82333;
+        }
+        .flash-message {
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        .flash-message.success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .flash-message.danger {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Панель администратора</h1>
+        <p><a href="{{ url_for('private_content') }}" style="color: #1a73e8;">Вернуться к ленте</a></p>
+
+        <!-- Список постов -->
+        <h2>Все посты</h2>
+        {% if posts %}
+            {% for post in posts %}
+                <div class="post">
+                    <h3>{{ post.title }}</h3>
+                    <p>{{ post.content }}</p>
+                    {% if post.media_path %}
+                        {% if post.media_path.endswith(('.mp4', '.webm', '.ogg')) %}
+                            <video controls>
+                                <source src="{{ url_for('static', filename='uploads/' + post.media_path) }}" type="video/mp4">
+                                Ваш браузер не поддерживает видео.
+                            </video>
+                        {% else %}
+                            <img src="{{ url_for('static', filename='uploads/' + post.media_path) }}" alt="Post media">
+                        {% endif %}
+                    {% endif %}
+                    <p class="post-meta">Автор: {{ post.user.username }} | Опубликовано: {{ post.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+                    <form method="POST" action="{{ url_for('delete_post', post_id=post.id) }}" style="display: inline;">
+                        <button type="submit" class="delete-btn">Удалить пост</button>
+                    </form>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p>Постов пока нет.</p>
+        {% endif %}
+
+        <!-- Список жалоб -->
+        <h2>Жалобы</h2>
+        {% if reports %}
+            {% for report in reports %}
+                <div class="report">
+                    <p><strong>Жалоба от:</strong> {{ report.user.username }}</p>
+                    <p><strong>Причина:</strong> {{ report.reason }}</p>
+                    {% if report.post %}
+                        <p><strong>Пост:</strong> {{ report.post.title }} (Автор: {{ report.post.user.username }})</p>
+                    {% elif report.comment %}
+                        <p><strong>Комментарий:</strong> {{ report.comment.content }} (Автор: {{ report.comment.user.username }})</p>
+                    {% endif %}
+                    <p class="post-meta">Время: {{ report.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p>Жалоб пока нет.</p>
+        {% endif %}
+
+        <!-- Обработка сообщений (flash) -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash-message {{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+</body>
+</html>
