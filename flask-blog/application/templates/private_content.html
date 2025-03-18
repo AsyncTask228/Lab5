@@ -3,103 +3,228 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Личный кабинет</title>
+    <title>Личная страница</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            background-color: #f7f8f9;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
+            font-family: 'Arial', sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
             padding: 20px;
+            color: #333;
         }
-
         .container {
-            width: 50%;
-            background: white;
+            max-width: 800px;
+            margin: 0 auto;
+            background: #fff;
             padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
-
-        h2 {
-            text-align: center;
+        h1, h2, h3, h4 {
+            color: #1a73e8;
         }
-
-        input, textarea {
-            width: 100%;
-            padding: 10px;
-            margin: 10px 0;
-            border: 1px solid #ccc;
-            border-radius: 5px;
+        .welcome {
+            font-size: 1.2em;
+            margin-bottom: 20px;
         }
-
-        button {
-            width: 100%;
-            padding: 10px;
-            background: #007bff;
+        .create-post-btn, .comment-btn {
+            background-color: #1a73e8;
             color: white;
+            padding: 8px 16px;
             border: none;
             border-radius: 5px;
             cursor: pointer;
+            transition: background-color 0.3s;
+            margin-bottom: 10px;
         }
-
-        button:hover {
-            background: #0056b3;
+        .create-post-btn:hover, .comment-btn:hover {
+            background-color: #1557b0;
         }
-
+        .post-form, .comment-form {
+            margin-bottom: 30px;
+            display: none; /* Скрыты по умолчанию */
+        }
+        .post-form.visible, .comment-form.visible {
+            display: block; /* Показываем при добавлении класса visible */
+        }
+        .post-form input[type="text"], .post-form textarea, .comment-form textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        .post-form input[type="file"] {
+            margin: 10px 0;
+        }
+        .post-form button, .comment-form button {
+            background-color: #1a73e8;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .post-form button:hover, .comment-form button:hover {
+            background-color: #1557b0;
+        }
         .post {
-            border-bottom: 1px solid #ddd;
-            padding: 15px 0;
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            background: #fafafa;
         }
-
+        .post img, .post video {
+            max-width: 100%;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+        .post-meta {
+            font-size: 0.9em;
+            color: #666;
+        }
         .comment {
-            padding-left: 20px;
-            font-size: 14px;
-            color: #555;
+            margin-left: 20px;
+            padding: 10px;
+            background: #f5f5f5;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+        .flash-message {
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        .flash-message.success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .flash-message.danger {
+            background-color: #f8d7da;
+            color: #721c24;
         }
     </style>
 </head>
 <body>
-
     <div class="container">
-        <h2>Добро пожаловать, {{ current_user.username }}!</h2>
+        <h1>Личная страница</h1>
+        <p class="welcome">Добро пожаловать, {{ current_user.username }}!</p>
 
-        <!-- Форма для создания поста -->
-        <form method="POST">
-            {{ form.hidden_tag() }}
-            <input type="text" name="title" placeholder="Заголовок поста" required>
-            <textarea name="content" placeholder="Текст поста" rows="4" required></textarea>
-            <button type="submit">Опубликовать</button>
-        </form>
+        <!-- Кнопка для показа формы создания поста -->
+        <button class="create-post-btn" onclick="togglePostForm()">Создать публикацию</button>
 
-        <hr>
+        <!-- Форма для создания поста (скрыта по умолчанию) -->
+        <div class="post-form" id="postForm">
+            <h2>Создать новый пост</h2>
+            <form method="POST" action="{{ url_for('private_content') }}" enctype="multipart/form-data">
+                {{ post_form.hidden_tag() }}
+                <input type="hidden" name="form_name" value="post_form">
+                <div>
+                    {{ post_form.title.label }}<br>
+                    {{ post_form.title(size=32, placeholder="Введите заголовок") }}<br>
+                    {% for error in post_form.title.errors %}
+                        <span style="color: red;">{{ error }}</span><br>
+                    {% endfor %}
+                </div>
+                <div>
+                    {{ post_form.content.label }}<br>
+                    {{ post_form.content(rows=5, cols=50, placeholder="Напишите что-нибудь...") }}<br>
+                    {% for error in post_form.content.errors %}
+                        <span style="color: red;">{{ error }}</span><br>
+                    {% endfor %}
+                </div>
+                <div>
+                    <label for="media">Фото или видео</label><br>
+                    <input type="file" name="media" accept="image/*,video/*"><br>
+                </div>
+                <div>
+                    {{ post_form.submit() }}
+                </div>
+            </form>
+        </div>
 
-        <!-- Отображение постов -->
-        {% for post in posts %}
-            <div class="post">
-                <h3>{{ post.title }}</h3>
-                <p>{{ post.content }}</p>
-                <small>Автор: {{ post.user.username }} | {{ post.timestamp.strftime('%Y-%m-%d %H:%M') }}</small>
+        <!-- Список постов -->
+        <h2>Лента</h2>
+        {% if posts %}
+            {% for post in posts %}
+                <div class="post">
+                    <h3>{{ post.title }}</h3>
+                    <p>{{ post.content }}</p>
+                    {% if post.media_path %}
+                        {% if post.media_path.endswith(('.mp4', '.webm', '.ogg')) %}
+                            <video controls>
+                                <source src="{{ url_for('static', filename='uploads/' + post.media_path) }}" type="video/mp4">
+                                Ваш браузер не поддерживает видео.
+                            </video>
+                        {% else %}
+                            <img src="{{ url_for('static', filename='uploads/' + post.media_path) }}" alt="Post media">
+                        {% endif %}
+                    {% endif %}
+                    <p class="post-meta">Автор: {{ post.user.username }} | Опубликовано: {{ post.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</p>
 
-                <!-- Форма для комментариев -->
-                <form method="POST" action="{{ url_for('comment', post_id=post.id) }}">
-                    {{ form.hidden_tag() }}
-                    <textarea name="content" placeholder="Оставьте комментарий" rows="2" required></textarea>
-                    <button type="submit">Комментировать</button>
-                </form>
+                    <!-- Комментарии -->
+                    <h4>Комментарии:</h4>
+                    {% if post.comments %}
+                        {% for comment in post.comments %}
+                            <div class="comment">
+                                <p>{{ comment.content }} <br>
+                                   <small>Автор: {{ comment.user.username }} | {{ comment.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</small>
+                                </p>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <p>Комментариев пока нет.</p>
+                    {% endif %}
 
-                <!-- Отображение комментариев -->
-                {% for comment in post.comments %}
-                    <div class="comment">
-                        <strong>{{ comment.user.username }}</strong>: {{ comment.content }}
-                        <small>{{ comment.timestamp.strftime('%Y-%m-%d %H:%M') }}</small>
+                    <!-- Кнопка для показа формы комментирования -->
+                    <button class="comment-btn" onclick="toggleCommentForm('commentForm-{{ post.id }}')">Комментировать</button>
+
+                    <!-- Форма для добавления комментария (скрыта по умолчанию) -->
+                    <div class="comment-form" id="commentForm-{{ post.id }}">
+                        <form method="POST" action="{{ url_for('private_content') }}">
+                            {{ comment_form.hidden_tag() }}
+                            <input type="hidden" name="form_name" value="comment_form">
+                            <input type="hidden" name="post_id" value="{{ post.id }}">
+                            <div>
+                                {{ comment_form.content(rows=3, cols=50, placeholder="Оставьте комментарий...") }}<br>
+                                {% for error in comment_form.content.errors %}
+                                    <span style="color: red;">{{ error }}</span><br>
+                                {% endfor %}
+                            </div>
+                            <div>
+                                {{ comment_form.submit() }}
+                            </div>
+                        </form>
                     </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p>Постов пока нет.</p>
+        {% endif %}
+
+        <!-- Обработка сообщений (flash) -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash-message {{ category }}">{{ message }}</div>
                 {% endfor %}
-            </div>
-        {% endfor %}
+            {% endif %}
+        {% endwith %}
     </div>
 
+    <script>
+        function togglePostForm() {
+            const form = document.getElementById('postForm');
+            form.classList.toggle('visible');
+        }
+
+        function toggleCommentForm(formId) {
+            const form = document.getElementById(formId);
+            form.classList.toggle('visible');
+        }
+    </script>
 </body>
 </html>

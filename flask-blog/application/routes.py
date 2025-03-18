@@ -1,13 +1,62 @@
-from application import app
+import os
+from application import app, db
 from flask import render_template, flash, redirect, url_for, request
-from application.forms import LoginForm, RegisterForm
-from . import db
-from .models import User
-from .forms import RegisterForm, LoginForm
+from application.forms import LoginForm, RegisterForm, PostForm, CommentForm
+from application.models import User, Post, Comment
 from werkzeug.security import generate_password_hash, check_password_hash
-from application.models import Post, Comment
-from application.forms import PostForm, CommentForm
-from flask_login import login_required, current_user, LoginManager
+from flask_login import login_user, current_user, logout_user, login_required
+from werkzeug.utils import secure_filename
+
+UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static/uploads')
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'mp4', 'webm', 'ogg'}
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+if not os.path.exists(app.config['UPLOAD_FOLDER']):
+    os.makedirs(app.config['UPLOAD_FOLDER'])
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+@app.route("/private_content", methods=['GET', 'POST'])
+@login_required
+def private_content():
+    post_form = PostForm()
+    comment_form = CommentForm()
+
+    if post_form.validate_on_submit() and request.form.get('form_name') == 'post_form':
+        post = Post(
+            title=post_form.title.data,
+            content=post_form.content.data,
+            user_id=current_user.id
+        )
+        if 'media' in request.files:
+            file = request.files['media']
+            if file and allowed_file(file.filename):
+                filename = secure_filename(file.filename)
+                file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                post.media_path = filename
+        db.session.add(post)
+        db.session.commit()
+        flash('Пост успешно опубликован!', 'success')
+        return redirect(url_for('private_content'))
+
+    if comment_form.validate_on_submit() and request.form.get('form_name') == 'comment_form':
+        post_id = request.form.get('post_id')
+        comment = Comment(
+            content=comment_form.content.data,
+            user_id=current_user.id,
+            post_id=post_id
+        )
+        db.session.add(comment)
+        db.session.commit()
+        flash('Комментарий добавлен!', 'success')
+        return redirect(url_for('private_content'))
+
+    posts = Post.query.order_by(Post.timestamp.desc()).all()
+    return render_template('private_content.html', 
+                          post_form=post_form, 
+                          comment_form=comment_form, 
+                          posts=posts)
 
 
 @app.route("/sign_up", methods=['GET', 'POST'])
@@ -54,12 +103,12 @@ def sign_up():
 @app.route("/sign_in", methods=['GET', 'POST'])
 def sign_in():
     form = LoginForm()
-
     if form.validate_on_submit():
         user = User.query.filter_by(email=form.email.data).first()
         if user and check_password_hash(user.password_hash, form.password.data):
+            login_user(user)  # Авторизуем пользователя
             flash('Login successful!', 'success')
-            return redirect(url_for('private_content'))
+            return redirect(url_for('private_content'))  # Перенаправляем на private_content
         else:
             flash('Login failed. Check your email and/or password.', 'danger')
     return render_template('sign_in.html', form=form)
@@ -68,33 +117,6 @@ def sign_in():
 @app.route("/") # avaliable_contant
 def main_page():
     return render_template("main_page.html")
-
-
-@app.route("/private_content")
-@login_required
-def private_content():
-    form = PostForm()
-    if form.validate_on_submit():
-        new_post = Post(title=form.title.data, content=form.content.data, user_id=current_user.id)
-        db.session.add(new_post)
-        db.session.commit()
-        flash('Пост опубликован!', 'success')
-        return redirect(url_for('private_content'))
-
-    posts = Post.query.order_by(Post.timestamp.desc()).all()  # Получаем все посты (новые сверху)
-    return render_template('private_content.html', form=form, posts=posts)
-
-
-@app.route('/comment/<int:post_id>', methods=['POST'])
-def comment(post_id):
-    form = CommentForm()
-    post = Post.query.get_or_404(post_id)  # Проверяем, существует ли пост
-    if form.validate_on_submit():
-        new_comment = Comment(content=form.content.data, user_id=current_user.id, post_id=post_id)
-        db.session.add(new_comment)
-        db.session.commit()
-        flash('Комментарий добавлен!', 'success')
-    return redirect(url_for('private_content'))
 
 
 @app.route("/admin")
