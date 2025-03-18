@@ -19,6 +19,7 @@
             padding: 20px;
             border-radius: 10px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            position: relative; /* Добавляем позиционирование для кнопки */
         }
         h1, h2, h3, h4 {
             color: #1a73e8;
@@ -39,6 +40,22 @@
         }
         .create-post-btn:hover, .comment-btn:hover {
             background-color: #1557b0;
+        }
+        .logout-btn {
+            background-color: #1a73e8;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 5px;
+            text-decoration: none; /* Убираем подчёркивание */
+            position: absolute; /* Позиционируем кнопку */
+            top: 20px;
+            right: 20px; /* Размещаем в правом верхнем углу */
+            transition: background-color 0.3s;
+        }
+        .logout-btn:hover {
+            background-color: #1557b0;
+            text-decoration: none; /* Убираем подчёркивание при наведении */
         }
         .post-form, .comment-form {
             margin-bottom: 30px;
@@ -111,9 +128,8 @@
 <body>
     <div class="container">
         <h1>Личная страница</h1>
-        <p class="welcome">Добро пожаловать, {{ current_user.username }}! 
-            <a href="{{ url_for('logout') }}" class="create-post-btn" style="float: right;">Выйти</a>
-        </p>
+        <p class="welcome">Добро пожаловать, {{ current_user.username }}!</p>
+        <a href="{{ url_for('logout') }}" class="logout-btn">Выйти</a>
 
         <!-- Кнопка для показа формы создания поста -->
         <button class="create-post-btn" onclick="togglePostForm()">Создать публикацию</button>
